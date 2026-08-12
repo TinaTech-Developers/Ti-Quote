@@ -55,9 +55,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto bg-white">
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-2xl">
-        <div className="px-6 py-6 sm:px-10 sm:py-10">
+    <div className="w-full max-w-lg mx-auto bg-white ">
+      <div className=" border-slate-200 bg-white shadow-2xl">
+        <div className="px-6 py-6 ">
           {/* Logo */}
           <div className="mb-3 flex justify-center">
             <div className="rounded-2xl bg-[#0B3954] p-4 shadow-lg">
@@ -72,7 +72,7 @@ export default function LoginPage() {
           </div>
 
           {/* Heading */}
-          <div className="mb-8 text-center">
+          <div className="mb-3 text-center">
             <h1 className="text-3xl font-bold tracking-tight text-slate-800">
               Welcome Back
             </h1>
@@ -90,7 +90,7 @@ export default function LoginPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-3">
             {/* Email */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -124,6 +124,7 @@ export default function LoginPage() {
                     focus:border-[#0097A7]
                     focus:ring-4
                     focus:ring-cyan-100
+                    text-slate-700
                   "
                 />
               </div>
@@ -171,6 +172,7 @@ export default function LoginPage() {
                     focus:border-[#0097A7]
                     focus:ring-4
                     focus:ring-cyan-100
+                    text-slate-700
                   "
                 />
               </div>
@@ -212,10 +214,9 @@ export default function LoginPage() {
           </form>
 
           {/* Footer */}
-          <div className="mt-8 border-t border-slate-100 pt-5">
+          <div className="mt-3 border-t border-slate-100 pt-5">
             <p className="text-center text-xs text-slate-400">
-              © {new Date().getFullYear()} Trebo Accounting System. All rights
-              reserved.
+              © {new Date().getFullYear()} Ti-Quote System. All rights reserved.
             </p>
           </div>
         </div>

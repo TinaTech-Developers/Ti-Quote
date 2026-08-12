@@ -42,15 +42,26 @@ export async function GET(
     }
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: any) {
     console.error("GET PRODUCT ERROR:", error);
+
+    if (error?.status === 403) {
+      return NextResponse.json(
+        {
+          message: "You do not have permission to view products.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
 
     return NextResponse.json(
       {
-        message: "Forbidden",
+        message: "Failed to load product.",
       },
       {
-        status: 403,
+        status: 500,
       },
     );
   }
@@ -74,6 +85,51 @@ export async function PUT(
     const { name, description, sku, unit, price, lowStockAlert, trackStock } =
       body;
 
+    // -------------------------------------------------
+    // VALIDATION
+    // -------------------------------------------------
+
+    if (!name || !name.trim()) {
+      return NextResponse.json(
+        {
+          message: "Product name is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (price === undefined || price === null || Number(price) < 0) {
+      return NextResponse.json(
+        {
+          message: "A valid product price is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      lowStockAlert !== undefined &&
+      lowStockAlert !== null &&
+      Number(lowStockAlert) < 0
+    ) {
+      return NextResponse.json(
+        {
+          message: "Low stock alert cannot be negative.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    // -------------------------------------------------
+    // FIND PRODUCT
+    // -------------------------------------------------
+
     const existingProduct = await prisma.product.findFirst({
       where: {
         id,
@@ -84,7 +140,7 @@ export async function PUT(
     if (!existingProduct) {
       return NextResponse.json(
         {
-          message: "Product not found",
+          message: "Product not found.",
         },
         {
           status: 404,
@@ -92,43 +148,91 @@ export async function PUT(
       );
     }
 
+    // -------------------------------------------------
+    // SKU DUPLICATE CHECK
+    // -------------------------------------------------
+
+    if (sku && sku.trim()) {
+      const duplicateSku = await prisma.product.findFirst({
+        where: {
+          companyId: user.companyId,
+          sku: sku.trim(),
+          NOT: {
+            id,
+          },
+        },
+      });
+
+      if (duplicateSku) {
+        return NextResponse.json(
+          {
+            message: "A product with this SKU already exists.",
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+    }
+
+    // -------------------------------------------------
+    // UPDATE
+    // -------------------------------------------------
+
     const product = await prisma.product.update({
       where: {
         id,
       },
 
       data: {
-        name,
-        description,
-        sku,
-        unit,
-        price,
-        lowStockAlert,
-        trackStock,
+        name: name.trim(),
+        description:
+          description && description.trim() ? description.trim() : null,
+
+        sku: sku && sku.trim() ? sku.trim() : null,
+
+        unit: unit && unit.trim() ? unit.trim() : null,
+
+        price: Number(price),
+
+        lowStockAlert: trackStock ? Number(lowStockAlert || 0) : 0,
+
+        trackStock: Boolean(trackStock),
       },
     });
+
+    // -------------------------------------------------
+    // ACTIVITY LOG
+    // -------------------------------------------------
 
     await prisma.activityLog.create({
       data: {
         companyId: user.companyId,
-
         userId: user.id,
-
         action: "UPDATE_PRODUCT",
-
         entity: "Product",
-
         entityId: product.id,
       },
     });
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: any) {
     console.error("UPDATE PRODUCT ERROR:", error);
+
+    if (error?.status === 403) {
+      return NextResponse.json(
+        {
+          message: "You do not have permission to update products.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
 
     return NextResponse.json(
       {
-        message: "Update failed",
+        message: "Update failed.",
       },
       {
         status: 500,
@@ -151,6 +255,10 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // -------------------------------------------------
+    // FIND PRODUCT
+    // -------------------------------------------------
+
     const product = await prisma.product.findFirst({
       where: {
         id,
@@ -161,13 +269,17 @@ export async function DELETE(
     if (!product) {
       return NextResponse.json(
         {
-          message: "Product not found",
+          message: "Product not found.",
         },
         {
           status: 404,
         },
       );
     }
+
+    // -------------------------------------------------
+    // SOFT DELETE
+    // -------------------------------------------------
 
     await prisma.product.update({
       where: {
@@ -179,29 +291,42 @@ export async function DELETE(
       },
     });
 
+    // -------------------------------------------------
+    // ACTIVITY LOG
+    // -------------------------------------------------
+
     await prisma.activityLog.create({
       data: {
         companyId: user.companyId,
-
         userId: user.id,
-
         action: "DELETE_PRODUCT",
-
         entity: "Product",
-
         entityId: id,
       },
     });
 
     return NextResponse.json({
-      message: "Product deactivated",
+      message: "Product deactivated successfully.",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("DELETE PRODUCT ERROR:", error);
+
+    // IMPORTANT:
+    // Don't turn ForbiddenError into a 500.
+    if (error?.status === 403) {
+      return NextResponse.json(
+        {
+          message: "You do not have permission to delete products.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
 
     return NextResponse.json(
       {
-        message: "Delete failed",
+        message: "Delete failed.",
       },
       {
         status: 500,

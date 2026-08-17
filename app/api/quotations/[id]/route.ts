@@ -72,6 +72,9 @@ export async function GET(
       );
     }
 
+    console.log("Quotation status:", quotation.status);
+    console.log("Quotation:", quotation);
+
     return NextResponse.json(quotation);
   } catch (error) {
     console.error("GET QUOTATION ERROR:", error);

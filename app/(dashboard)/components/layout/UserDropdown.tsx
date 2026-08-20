@@ -71,7 +71,7 @@ export default function UserDropdown() {
         method: "POST",
       });
 
-      router.push("/login");
+      router.push("/");
 
       router.refresh();
     } catch (error) {

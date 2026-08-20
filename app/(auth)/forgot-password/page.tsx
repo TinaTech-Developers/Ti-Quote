@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
       </form>
 
       <Link
-        href="/login"
+        href="/"
         className="
           mt-6
           flex
